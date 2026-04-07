@@ -373,7 +373,6 @@ Declare `fontFamily:` in any Flutter `TextStyle` to use these fonts:
 |--------|--------|
 | New York | Regular |
 | Gilroy | Medium |
-| SF Pro | Regular |
 | Alegreya | Regular |
 | Amazon Ember | Regular |
 | Atkinson Hyperlegible | Regular |

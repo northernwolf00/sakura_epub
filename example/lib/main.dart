@@ -85,7 +85,6 @@ const _themes = [
 _ThemeOption _optionFor(EpubThemeType t) =>
     _themes.firstWhere((o) => o.type == t, orElse: () => _themes.first);
 const _fonts = [
-  'SFPro',
   'NewYork',
   'Gilroy',
   'Alegreya',
@@ -138,7 +137,7 @@ class SakuraApp extends StatefulWidget {
 
 class _SakuraAppState extends State<SakuraApp> {
   EpubThemeType _themeType = EpubThemeType.light;
-  String _fontFamily = 'SFPro';
+  String _fontFamily = 'Gilroy';
 
   void _onSettingsChanged(EpubThemeType t, String f) {
     setState(() {

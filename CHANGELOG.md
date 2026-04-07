@@ -16,7 +16,7 @@ This is the first independent release of **sakura_epub**, forked from `flutter_e
 
 #### Typography & Appearance
 - **16 bundled reader fonts** — fonts are embedded in the package so consumers need zero extra setup:
-  New York, Gilroy, SF Pro, Alegreya, Amazon Ember, Atkinson Hyperlegible, Bitter Pro, Bookerly,
+  New York, Gilroy, Alegreya, Amazon Ember, Atkinson Hyperlegible, Bitter Pro, Bookerly,
   Droid Sans, EB Garamond, Gentium Book Plus, Halant, IBM Plex Sans, Linux Libertine, Literata,
   Lora, Ubuntu
 - **`EpubTheme` background color propagation** — the background color is now correctly extracted

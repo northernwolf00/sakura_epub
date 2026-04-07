@@ -44,9 +44,6 @@ flutter:
       fonts:
         - asset: lib/assets/fonts/Gilroy-Medium.ttf    
 
-    - family: SFPro
-      fonts:
-        - asset: lib/assets/fonts/SF-Pro.ttf
     - family: Alegreya
       fonts:
         - asset: lib/assets/fonts/Alegreya.ttf
