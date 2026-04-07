@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -589,6 +590,14 @@ class _EpubViewerState extends State<EpubViewer> {
 
     String? foregroundColor = widget.displaySettings?.theme?.foregroundColor
         ?.toHex();
+
+    // Extract background color from the theme's BoxDecoration if available
+    String? backgroundColor;
+    final bgDecoration = widget.displaySettings?.theme?.backgroundDecoration;
+    if (bgDecoration is BoxDecoration && bgDecoration.color != null) {
+      backgroundColor = bgDecoration.color!.toHex();
+    }
+
     String customCss = widget.displaySettings?.theme?.customCss != null
         ? Utils.encodeMap(widget.displaySettings!.theme!.customCss!)
         : "null";
@@ -597,9 +606,11 @@ class _EpubViewerState extends State<EpubViewer> {
 
     String xpathParam = initialXPath != null ? '"$initialXPath"' : 'null';
 
+    String base64Data = base64Encode(data);
+
     webViewController?.evaluateJavascript(
       source:
-          'loadBook([${data.join(',')}], "$cfi", $xpathParam, "$manager", "$flow", "$spread", $snap, $allowScripted, "$direction", $useCustomSwipe, "${null}", "$foregroundColor", "$fontSize", $clearSelectionOnPageChange, ${widget.selectAnnotationRange}, $customCss)',
+          'loadBook("$base64Data", "$cfi", $xpathParam, "$manager", "$flow", "$spread", $snap, $allowScripted, "$direction", $useCustomSwipe, "$backgroundColor", "$foregroundColor", "$fontSize", $clearSelectionOnPageChange, ${widget.selectAnnotationRange}, $customCss)',
     );
   }
 
@@ -618,7 +629,7 @@ class _EpubViewerState extends State<EpubViewer> {
             : widget.selectionContextMenu,
         key: webViewKey,
         initialFile:
-            'packages/flutter_epub_viewer/lib/assets/webpage/html/swipe.html',
+            'packages/sakura_epub/lib/assets/webpage/html/swipe.html',
         initialSettings: settings
           ..disableVerticalScroll = widget.displaySettings?.snap ?? false,
         onWebViewCreated: (controller) async {

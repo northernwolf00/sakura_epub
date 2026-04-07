@@ -180,11 +180,16 @@ class EpubController {
 
   updateTheme({required EpubTheme theme}) async {
     String? foregroundColor = theme.foregroundColor?.toHex();
+    String? backgroundColor;
+    final bgDecoration = theme.backgroundDecoration;
+    if (bgDecoration is BoxDecoration && bgDecoration.color != null) {
+      backgroundColor = bgDecoration.color!.toHex();
+    }
     String customCss = theme.customCss != null
         ? Utils.encodeMap(theme.customCss!)
         : "null";
     await webViewController?.evaluateJavascript(
-      source: 'updateTheme("","$foregroundColor", $customCss)',
+      source: 'updateTheme("$backgroundColor","$foregroundColor", $customCss)',
     );
   }
 

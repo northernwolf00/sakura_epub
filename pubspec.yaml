@@ -1,7 +1,7 @@
 name: sakura_epub
-description: "A new Flutter package project."
-version: 0.0.1
-homepage:
+description: "A full-featured Flutter EPUB reader package. Render EPUB 2 & 3 books with annotations, search, themes, and programmatic navigation — powered by epub.js."
+version: 0.1.0
+homepage: https://github.com/northernwolf00/sakura_epub
 
 environment:
   sdk: ^3.6.0
@@ -27,9 +27,8 @@ dev_dependencies:
 flutter:
 
   assets:
-    - assets/fonts/
     - assets/images/
-    - assets/animations/
+    - lib/assets/fonts/
     - lib/assets/webpage/dist/
     - lib/assets/webpage/html/
   
@@ -40,54 +39,54 @@ flutter:
     #book fonts
     - family: NewYork
       fonts:
-        - asset: assets/fonts/NewYork.ttf 
+        - asset: lib/assets/fonts/NewYork.ttf 
     - family: Gilroy
       fonts:
-        - asset: assets/fonts/Gilroy-Medium.ttf    
+        - asset: lib/assets/fonts/Gilroy-Medium.ttf    
 
     - family: SFPro
       fonts:
-        - asset: assets/fonts/SF-Pro.ttf
+        - asset: lib/assets/fonts/SF-Pro.ttf
     - family: Alegreya
       fonts:
-        - asset: assets/fonts/Alegreya.ttf
+        - asset: lib/assets/fonts/Alegreya.ttf
     - family: Amazon Ember
       fonts:
-        - asset: assets/fonts/Amazon-Ember-Regular.ttf
+        - asset: lib/assets/fonts/Amazon-Ember-Regular.ttf
     - family: Atkinson Hyperlegible
       fonts:
-        - asset: assets/fonts/AtkinsonHyperlegible-Regular.ttf
+        - asset: lib/assets/fonts/AtkinsonHyperlegible-Regular.ttf
     - family: Bitter Pro
       fonts:
-        - asset: assets/fonts/BitterPro-Regular.ttf
+        - asset: lib/assets/fonts/BitterPro-Regular.ttf
     - family: Bookerly
       fonts:
-        - asset: assets/fonts/Bookerly.ttf
+        - asset: lib/assets/fonts/Bookerly.ttf
     - family: Droid Sans
       fonts:
-        - asset: assets/fonts/DroidSans.ttf
+        - asset: lib/assets/fonts/DroidSans.ttf
     - family: EB Garamond
       fonts:
-        - asset: assets/fonts/EBGaramond-Var.ttf
+        - asset: lib/assets/fonts/EBGaramond-Var.ttf
     - family: Gentium Book Plus
       fonts:
-        - asset: assets/fonts/GentiumBookPlus-Regular.ttf
+        - asset: lib/assets/fonts/GentiumBookPlus-Regular.ttf
     - family: Halant
       fonts:
-        - asset: assets/fonts/Halant-Regular.ttf
+        - asset: lib/assets/fonts/Halant-Regular.ttf
     - family: IBM Plex Sans
       fonts:
-        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+        - asset: lib/assets/fonts/IBMPlexSans-Regular.ttf
     - family: LinLibertine
       fonts:
-        - asset: assets/fonts/LinLibertine-Regular.ttf
+        - asset: lib/assets/fonts/LinLibertine-Regular.ttf
     - family: Literata
       fonts:
-        - asset: assets/fonts/Literata-Var.ttf
+        - asset: lib/assets/fonts/Literata-Var.ttf
     - family: Lora
       fonts:
-        - asset: assets/fonts/Lora-Var.ttf
+        - asset: lib/assets/fonts/Lora-Var.ttf
     - family: Ubuntu
       fonts:
-        - asset: assets/fonts/Ubuntu-Var.ttf
+        - asset: lib/assets/fonts/Ubuntu-Var.ttf
 
