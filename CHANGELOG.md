@@ -1,89 +1,84 @@
 # Changelog
 
-All notable changes to **sakura_epub** will be documented in this file.
+All notable changes to **sakura_epub** will be documented in this file.  
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+> **sakura_epub** is a fork of [flutter_epub_viewer](https://pub.dev/packages/flutter_epub_viewer) by fayis.dev (BSD-3-Clause).  
+> All changes below are relative to the upstream `flutter_epub_viewer` baseline.
 
 ---
 
 ## [0.1.0] — 2026-04-07
 
-### Added
-- **`EpubViewer` widget** — full-featured EPUB rendering via embedded WebView (epub.js + flutter_inappwebview)
-- **`EpubController`** — programmatic control of the viewer
-  - `next()` / `prev()` — page navigation
-  - `display(cfi)` — jump to CFI string, XPath/XPointer, or chapter href
-  - `toProgressPercentage(double)` — seek by percentage (0.0–1.0)
-  - `moveToFirstPage()` / `moveToLastPage()`
-  - `getCurrentLocation()` — returns current `EpubLocation` with CFI + progress
-  - `getChapters()` / `parseChapters()` — chapter list access
-  - `getMetadata()` — returns `EpubMetadata` (title, author, etc.)
-  - `search(query)` — full-text search returning `List<EpubSearchResult>`
-  - `addHighlight(cfi, color, opacity)` — add colour highlight annotation
-  - `addUnderline(cfi)` — add underline annotation
-  - `removeHighlight(cfi)` / `removeUnderline(cfi)` — remove annotations
-  - `clearSelection()` — clear active text selection
-  - `extractText(startCfi, endCfi)` — extract text from CFI range
-  - `extractCurrentPageText()` — extract visible page text
-  - `getRectFromCfi(cfiRange)` — get bounding rect for a CFI range
-  - `setFontSize(fontSize)` — live font-size adjustment
-  - `setFlow(flow)` — switch between `paginated` and `scrolled`
-  - `setSpread(spread)` — control page spread
-  - `setManager(manager)` — set epub.js manager
-  - `updateTheme(theme)` — live theme switching
-- **`EpubSource`** — flexible book loading
-  - `EpubSource.fromFile(File)` — local file system
-  - `EpubSource.fromUrl(String, {headers})` — remote URL with optional headers
-  - `EpubSource.fromAsset(String)` — Flutter asset bundle
-- **`EpubDisplaySettings`** — initial reader configuration
-  - `fontSize`, `flow`, `spread`, `snap`, `manager`, `defaultDirection`
-  - `allowScriptedContent` — opt-in EPUB scripting support
-  - `useSnapAnimationAndroid` — snap animation toggle (Android)
-  - `theme` — initial `EpubTheme`
-- **`EpubTheme`** — six built-in themes with factory constructors
-  - `EpubTheme.light()`, `dark()`, `sepia()`, `tan()`, `grey()`, `mint()`
-  - `EpubTheme.custom(backgroundDecoration, foregroundColor, customCss)`
-  - Background color is correctly extracted from `BoxDecoration` and applied to epub.js content
-- **`EpubLocation`** — position model (`startCfi`, `endCfi`, `startXpath`, `endXpath`, `progress`)
-- **`EpubChapter`** — chapter model (`title`, `href`, `subitems`)
-- **`EpubSearchResult`** — search result model (`cfi`, `excerpt`)
-- **`EpubTextSelection`** — selection model (`selectedText`, `selectionCfi`, `selectionXpath`)
-- **`EpubTextExtractRes`** — text extraction model (`text`, `cfiRange`, `xpathRange`)
-- **`EpubMetadata`** — book metadata model
-- **Callbacks on `EpubViewer`**
-  - `onEpubLoaded` — fires when book is rendered and ready
-  - `onLocationLoaded` — fires when location map is generated (progress available)
-  - `onChaptersLoaded(List<EpubChapter>)` — fires when chapter list is parsed
-  - `onRelocated(EpubLocation)` — fires on every page change
-  - `onTextSelected(EpubTextSelection)` — fires on text selection
-  - `onSelection(text, cfi, selectionRect, viewRect)` — fires with WebView-relative coordinates
-  - `onSelectionChanging` — fires while user drags selection handles
-  - `onDeselection` — fires when selection is cleared
-  - `onAnnotationClicked(cfi, rect)` — fires when user taps a highlight or underline
-  - `onInitialPositionLoading(type)` — fires when restoring saved position
-  - `onInitialPositionLoaded` — fires when position restore is complete
-  - `onTouchDown(x, y)` / `onTouchUp(x, y)` — normalized touch coordinates
-- **Initial position restore** — `initialCfi` and `initialXPath` parameters
-- **`clearSelectionOnPageChange`** — auto-clear selection on navigation (default `true`)
-- **`selectAnnotationRange`** — auto-select text when annotation is clicked
-- **`suppressNativeContextMenu`** — hide the native long-press context menu
-- **`selectionContextMenu`** — custom `ContextMenu` for text selection
-- **Base64 EPUB loading** — large files are base64-encoded before passing to the WebView, reducing the JavaScript string size by ~55% compared to byte-array serialisation
-- **Bundled reader fonts** — 16 font families available for app-level use
-  - New York, Gilroy, SF Pro, Alegreya, Amazon Ember, Atkinson Hyperlegible, Bitter Pro, Bookerly, Droid Sans, EB Garamond, Gentium Book Plus, Halant, IBM Plex Sans, Linux Libertine, Literata, Lora, Ubuntu
-- **epub.js** bundled at `lib/assets/webpage/` — no CDN dependency, works offline
+This is the first independent release of **sakura_epub**, forked from `flutter_epub_viewer` v1.2.8.
 
-### Fixed
-- Asset path corrected from `packages/flutter_epub_viewer/...` to `packages/sakura_epub/...`
-- Font declarations in `pubspec.yaml` updated from non-existent `assets/fonts/` to correct `lib/assets/fonts/`
-- `backgroundColor` is now properly extracted from `EpubTheme.backgroundDecoration` and forwarded to epub.js `updateTheme()` — fixes black screen on dark-background themes
-- `updateTheme()` on `EpubController` now also passes background color correctly
+### Added
+
+#### Typography & Appearance
+- **16 bundled reader fonts** — fonts are embedded in the package so consumers need zero extra setup:
+  New York, Gilroy, SF Pro, Alegreya, Amazon Ember, Atkinson Hyperlegible, Bitter Pro, Bookerly,
+  Droid Sans, EB Garamond, Gentium Book Plus, Halant, IBM Plex Sans, Linux Libertine, Literata,
+  Lora, Ubuntu
+- **`EpubTheme` background color propagation** — the background color is now correctly extracted
+  from `backgroundDecoration` (`BoxDecoration.color`) and forwarded to epub.js `updateTheme()` as
+  a hex string. The upstream library always passed `null`, causing a black screen when the EPUB's
+  own CSS set a dark body background.
+- **`EpubController.updateTheme()` background fix** — same extraction applied to the runtime
+  theme-switching path so live theme changes also set the epub.js body background correctly.
+
+#### Stability & Performance
+- **Base64 EPUB loading** — large EPUB files are now base64-encoded in Dart and decoded with
+  `atob()` in JavaScript instead of being serialised as a comma-separated byte array
+  (`[12,34,56,…]`). For a 17 MB file the JS string shrinks from ~51 MB to ~23 MB, eliminating
+  OOM crashes and ANR timeouts on mid-range Android devices.
+- **`epubView.js` base64 decoder** — the bundled JavaScript detects whether `data` is a `String`
+  (base64) or an `Array` (legacy) and decodes accordingly, maintaining backward compatibility.
+
+#### Package Infrastructure
+- **Asset path corrected** — internal WebView asset reference updated from
+  `packages/flutter_epub_viewer/lib/assets/webpage/html/swipe.html` to
+  `packages/sakura_epub/lib/assets/webpage/html/swipe.html`.
+- **Font asset paths corrected** — all `fonts:` entries in `pubspec.yaml` updated from the
+  non-existent `assets/fonts/` to the real `lib/assets/fonts/` directory.
+- **`pubspec.yaml` assets section cleaned** — removed non-existent `assets/fonts/` and
+  `assets/animations/` entries; added correct `lib/assets/fonts/` entry.
+
+#### Example App
+- Complete rewrite of `example/lib/main.dart` with a modern, immersive reader UI:
+  - Full-screen reader with tap-to-reveal top/bottom bars (animated fade)
+  - Frosted-glass top bar: chapter list, search, and settings controls
+  - Frosted-glass bottom bar: slim progress track, prev/next navigation
+  - Draggable bottom sheet for reading settings (theme swatches + font-size slider)
+  - Draggable chapter-list bottom sheet with numbered chips
+  - Dedicated search input sheet and search-results sheet
+  - Floating selection bar with one-tap highlight and clear actions
+  - Animated loading screen (pulsing book icon + progress bar, themed to current epub background)
+  - Full adaptive dark/light color system driven by the active `EpubThemeType`
 
 ---
 
-## [0.0.1] — 2026-04-06
+## Upstream history (flutter_epub_viewer)
 
-### Added
-- Initial project scaffold
-- Basic EPUB viewer shell with flutter_inappwebview
-- epub.js integration
+The following is a condensed history of the upstream library that sakura_epub was forked from.
+Full details: https://pub.dev/packages/flutter_epub_viewer/changelog
+
+| Version | Highlights |
+|---------|-----------|
+| 1.2.8 | Fixed `getCurrentLocation()` |
+| 1.2.7 | Added `customCss` support in `EpubTheme` |
+| 1.2.6 | Fixed dispose issue |
+| 1.2.5 | `onTouchDown`/`onTouchUp`; `selectAnnotationRange`; XPath/XPointer navigation |
+| 1.2.4 | `onSelection` with WebView-relative coords; `onSelectionChanging`; `onDeselection`; `clearSelectionOnPageChange`; selection block during navigation |
+| 1.2.3 | iOS chapter parsing improvements |
+| 1.2.2 | Book metadata (`getMetadata()`) |
+| 1.2.1 | Theme change at runtime; first/last page navigation; font-size relocation fix |
+| 1.2.0 | `EpubTheme` with background and foreground color |
+| 1.1.6 | Remove-highlight fix |
+| 1.1.5 | LTR/RTL fixes; sub-chapter parsing; `onRelocated` fix on Android |
+| 1.1.4 | Size-fit fixes |
+| 1.1.3 | Reading progress |
+| 1.1.2 | Annotation click handler |
+| 1.1.1 | Book reload fix |
+| 1.1.0 | Local file & asset loading; underline annotation; text extraction |
+| 1.0.1 | Fixed blank screen |
+| 1.0.0 | Initial release — highlights, search, chapters, text selection, CFI navigation |

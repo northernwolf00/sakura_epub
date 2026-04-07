@@ -1,23 +1,77 @@
 # sakura_epub
 
-A powerful, feature-rich Flutter package for rendering EPUB books inside your app. Built on [epub.js](https://github.com/futurepress/epub.js/) and [flutter_inappwebview](https://pub.dev/packages/flutter_inappwebview), it gives you a complete in-app reading experience with a clean Dart API.
+A powerful Flutter package for rendering EPUB books inside your app — forked from
+[flutter_epub_viewer](https://pub.dev/packages/flutter_epub_viewer) by fayis.dev and extended with
+additional features, bug fixes, and bundled assets.
+
+Built on [epub.js](https://github.com/futurepress/epub.js/) and
+[flutter_inappwebview](https://pub.dev/packages/flutter_inappwebview).
+
+---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="25%">
+      <img src="assets/images/image2.jpg" width="180" alt="Reading view"/><br/>
+      <sub><b>Reading View</b></sub>
+    </td>
+    <td align="center" width="25%">
+      <img src="assets/images/image3.jpg" width="180" alt="Chapter list"/><br/>
+      <sub><b>Chapter List</b></sub>
+    </td>
+    <td align="center" width="25%">
+      <img src="assets/images/image1.jpg" width="180" alt="Appearance settings"/><br/>
+      <sub><b>Appearance Settings</b></sub>
+    </td>
+    <td align="center" width="25%">
+      <img src="assets/images/image4.jpg" width="180" alt="Search results"/><br/>
+      <sub><b>Search Results</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Sepia theme · paginated flow</sub></td>
+    <td align="center"><sub>Draggable chapter sheet</sub></td>
+    <td align="center"><sub>Theme swatches · font picker · size slider</sub></td>
+    <td align="center"><sub>Full-text search with 30 results</sub></td>
+  </tr>
+</table>
+
+---
+
+## What's new compared to flutter_epub_viewer
+
+| | flutter_epub_viewer | sakura_epub |
+|---|:---:|:---:|
+| EPUB 2 & 3 rendering | ✅ | ✅ |
+| Annotations (highlight / underline) | ✅ | ✅ |
+| Full-text search | ✅ | ✅ |
+| Text selection with coordinates | ✅ | ✅ |
+| XPath / XPointer navigation | ✅ | ✅ |
+| Custom CSS via `EpubTheme` | ✅ | ✅ |
+| Live theme switching | ✅ | ✅ |
+| **Background color applied to epub content** | ❌ (always null) | ✅ |
+| **Large file stability (base64 loading)** | ❌ (byte-array crash) | ✅ |
+| **16 bundled reader fonts** | ❌ | ✅ |
+| **Modern example app** | ❌ | ✅ |
 
 ---
 
 ## Features
 
-- **Full EPUB 2 & 3 support** — rendered natively via epub.js (no server required)
-- **Flexible book sources** — load from local file, Flutter asset, or remote URL
-- **Programmatic navigation** — next/prev, jump to CFI / XPath / chapter href, seek by percentage
+- **Full EPUB 2 & 3 support** — rendered via epub.js (offline, no CDN)
+- **Flexible book sources** — local file, Flutter asset, or remote URL
+- **Programmatic navigation** — next/prev, CFI, XPath, chapter href, percentage seek
 - **Annotations** — add/remove highlights and underlines by CFI range
-- **Full-text search** — returns a list of results with excerpts and CFI locations
+- **Full-text search** — results with excerpt and CFI jump
 - **Text selection callbacks** — with WebView-relative bounding rectangles
-- **Live settings** — font size, theme, flow (paginated/scrolled), and spread changeable at runtime
-- **Six built-in themes** — Light, Dark, Sepia, Tan, Grey, Mint (+ fully custom)
-- **16 bundled reader fonts** — including Bookerly, Literata, Lora, New York, and more
-- **Offline** — epub.js is bundled; no CDN dependency
-- **Initial position restore** — resume reading from a saved CFI or XPath
-- **Scripted content** — opt-in support for EPUB scripting
+- **Live settings** — font size, theme, flow, and spread changeable at runtime
+- **Six built-in themes** — Light, Dark, Sepia, Tan, Grey, Mint + fully custom
+- **16 bundled reader fonts** — Bookerly, Literata, Lora, New York, and more
+- **Large file support** — base64 loading eliminates OOM crashes for large EPUBs
+- **Correct theme backgrounds** — epub content body always receives the right background color
+- **Initial position restore** — resume from a saved CFI or XPath
 
 ---
 
@@ -31,22 +85,18 @@ A powerful, feature-rich Flutter package for rendering EPUB books inside your ap
 
 ## Installation
 
-Add to your `pubspec.yaml`:
-
 ```yaml
 dependencies:
   sakura_epub: ^0.1.0
 ```
 
-Then run:
-
 ```sh
 flutter pub get
 ```
 
-### Android setup
+### Android
 
-In `android/app/build.gradle` set `minSdk` to **21** or higher:
+Set `minSdk` to **21** or higher in `android/app/build.gradle`:
 
 ```gradle
 android {
@@ -56,9 +106,15 @@ android {
 }
 ```
 
-### iOS setup
+For network EPUBs on Android 8+, add to `AndroidManifest.xml`:
 
-In `ios/Podfile` set the platform to **12.0** or higher:
+```xml
+<application android:usesCleartextTraffic="true" ... >
+```
+
+### iOS
+
+Set platform to **12.0** or higher in `ios/Podfile`:
 
 ```ruby
 platform :ios, '12.0'
@@ -74,7 +130,6 @@ import 'package:sakura_epub/sakura_epub.dart';
 
 class ReaderPage extends StatefulWidget {
   const ReaderPage({super.key});
-
   @override
   State<ReaderPage> createState() => _ReaderPageState();
 }
@@ -93,10 +148,11 @@ class _ReaderPageState extends State<ReaderPage> {
           theme: EpubTheme.sepia(),
           flow: EpubFlow.paginated,
           snap: true,
+          allowScriptedContent: true,
         ),
-        onEpubLoaded: () => debugPrint('Book ready'),
-        onRelocated: (loc) => debugPrint('Progress: ${loc.progress}'),
-        onTextSelected: (sel) => debugPrint('Selected: ${sel.selectedText}'),
+        onEpubLoaded: () => debugPrint('Ready'),
+        onRelocated: (loc) => debugPrint('${(loc.progress * 100).toStringAsFixed(1)}%'),
+        onTextSelected: (sel) => debugPrint(sel.selectedText),
       ),
     );
   }
@@ -107,27 +163,16 @@ class _ReaderPageState extends State<ReaderPage> {
 
 ## Loading books
 
-### From a Flutter asset
-
 ```dart
-// pubspec.yaml: assets: [assets/my_book.epub]
+// Flutter asset (add to pubspec.yaml assets)
 EpubSource.fromAsset('assets/my_book.epub')
-```
 
-### From a local file
+// Local file
+EpubSource.fromFile(File('/path/to/book.epub'))
 
-```dart
-import 'dart:io';
-
-final file = File('/storage/emulated/0/Download/my_book.epub');
-EpubSource.fromFile(file)
-```
-
-### From a URL
-
-```dart
+// Remote URL (with optional auth headers)
 EpubSource.fromUrl(
-  'https://example.com/books/my_book.epub',
+  'https://example.com/book.epub',
   headers: {'Authorization': 'Bearer $token'},
 )
 ```
@@ -136,52 +181,40 @@ EpubSource.fromUrl(
 
 ## EpubController
 
-Create one controller per `EpubViewer`. Call its methods after `onEpubLoaded` fires.
+All methods require the book to be loaded. Wait for `onEpubLoaded` before calling them.
 
 ### Navigation
 
 ```dart
-_controller.next();           // next page
-_controller.prev();           // previous page
+_controller.next();
+_controller.prev();
 
-_controller.display(cfi: 'epubcfi(/6/4[chap01]!/4/2/1:0)'); // by CFI
-_controller.display(cfi: '/html/body/p[3]');                  // by XPath
-_controller.display(cfi: 'chapter_001.xhtml');                // by chapter href
+// Jump to a CFI, XPath/XPointer, or chapter href
+_controller.display(cfi: 'epubcfi(/6/4[chap01]!/4/2/1:0)');
+_controller.display(cfi: '/html/body/p[3]');
+_controller.display(cfi: 'Text/chapter_01.xhtml');
 
-_controller.toProgressPercentage(0.42); // seek to 42 %
+// Seek by percentage (0.0 – 1.0)
+_controller.toProgressPercentage(0.42);
 _controller.moveToFirstPage();
 _controller.moveToLastPage();
 ```
 
-### Location
+### Location & metadata
 
 ```dart
 final EpubLocation loc = await _controller.getCurrentLocation();
-print(loc.progress);   // 0.0 – 1.0
+print(loc.progress);    // 0.0 – 1.0
 print(loc.startCfi);
 print(loc.startXpath);
-```
 
-### Chapters
-
-```dart
-// Available immediately after onChaptersLoaded callback
-final List<EpubChapter> chapters = _controller.getChapters();
-
-// Or fetch asynchronously at any time
-final chapters = await _controller.parseChapters();
-
-for (final ch in chapters) {
-  print('${ch.title} → ${ch.href}');
-}
-```
-
-### Metadata
-
-```dart
 final EpubMetadata meta = await _controller.getMetadata();
 print(meta.title);
 print(meta.creator);
+
+final List<EpubChapter> chapters = _controller.getChapters();
+// or async:
+final chapters = await _controller.parseChapters();
 ```
 
 ### Search
@@ -192,21 +225,21 @@ final List<EpubSearchResult> results =
 
 for (final r in results) {
   print(r.excerpt);
-  _controller.display(cfi: r.cfi); // jump to result
+  _controller.display(cfi: r.cfi);
 }
 ```
 
 ### Annotations
 
 ```dart
-// Add a yellow highlight
+// Highlight with color
 _controller.addHighlight(
   cfi: selectionCfi,
   color: Colors.yellow,
   opacity: 0.4,
 );
 
-// Add an underline
+// Underline
 _controller.addUnderline(cfi: selectionCfi);
 
 // Remove
@@ -223,55 +256,41 @@ _controller.clearSelection();
 // Current visible page
 final EpubTextExtractRes page = await _controller.extractCurrentPageText();
 print(page.text);
+print(page.cfiRange);
 
-// Specific CFI range
+// Specific range
 final res = await _controller.extractText(
   startCfi: startCfi,
   endCfi: endCfi,
 );
 ```
 
-### Live appearance changes
+### Live appearance
 
 ```dart
-_controller.setFontSize(fontSize: 20);
+_controller.setFontSize(fontSize: 22);
 _controller.updateTheme(theme: EpubTheme.dark());
 _controller.setFlow(flow: EpubFlow.scrolled);
 _controller.setSpread(spread: EpubSpread.none);
+_controller.setManager(manager: EpubManager.continuous);
 ```
-
----
-
-## EpubDisplaySettings
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `fontSize` | `int` | `15` | Initial font size in px |
-| `flow` | `EpubFlow` | `paginated` | `paginated` or `scrolled` |
-| `spread` | `EpubSpread` | `auto` | `none`, `always`, `auto` |
-| `snap` | `bool` | `true` | Enable swipe between pages |
-| `manager` | `EpubManager` | `continuous` | epub.js manager |
-| `defaultDirection` | `EpubDefaultDirection` | `ltr` | `ltr` or `rtl` |
-| `allowScriptedContent` | `bool` | `false` | Allow EPUB scripts |
-| `useSnapAnimationAndroid` | `bool` | `false` | Snap animation on Android |
-| `theme` | `EpubTheme?` | `null` | Initial theme |
 
 ---
 
 ## Themes
 
-Six ready-made themes:
+Six built-in themes:
 
 ```dart
-EpubTheme.light()   // white background, black text
-EpubTheme.dark()    // #121212 background, white text
-EpubTheme.sepia()   // warm cream background
-EpubTheme.tan()     // darker brownish background
-EpubTheme.grey()    // dark grey background
-EpubTheme.mint()    // soft green background
+EpubTheme.light()   // white bg, black text
+EpubTheme.dark()    // #121212 bg, white text
+EpubTheme.sepia()   // warm cream bg, brown text
+EpubTheme.tan()     // darker tan bg, dark brown text
+EpubTheme.grey()    // dark grey bg, light grey text
+EpubTheme.mint()    // soft green bg, dark green text
 ```
 
-Custom theme:
+Custom theme with CSS overrides:
 
 ```dart
 EpubTheme.custom(
@@ -286,6 +305,22 @@ EpubTheme.custom(
 
 ---
 
+## EpubDisplaySettings
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `fontSize` | `int` | `15` | Initial font size (px) |
+| `flow` | `EpubFlow` | `paginated` | `paginated` or `scrolled` |
+| `spread` | `EpubSpread` | `auto` | `none` · `always` · `auto` |
+| `snap` | `bool` | `true` | Swipe between pages |
+| `manager` | `EpubManager` | `continuous` | epub.js manager |
+| `defaultDirection` | `EpubDefaultDirection` | `ltr` | `ltr` or `rtl` |
+| `allowScriptedContent` | `bool` | `false` | Allow EPUB scripts in iframes |
+| `useSnapAnimationAndroid` | `bool` | `false` | Snap animation on Android |
+| `theme` | `EpubTheme?` | `null` | Initial theme |
+
+---
+
 ## EpubViewer callbacks
 
 ```dart
@@ -293,37 +328,38 @@ EpubViewer(
   epubController: _controller,
   epubSource: _source,
 
-  // Position
-  initialCfi: savedCfi,          // restore reading position from CFI
-  initialXPath: savedXPath,      // restore from XPath/XPointer
+  // Restore position
+  initialCfi: savedCfi,
+  initialXPath: savedXPath,
 
   // Lifecycle
   onEpubLoaded: () { },
-  onLocationLoaded: () { },      // progress values are now accurate
+  onLocationLoaded: () { },           // progress values now accurate
   onChaptersLoaded: (chapters) { },
-  onRelocated: (location) { },
+  onRelocated: (EpubLocation loc) { },
 
-  // Position restore
-  onInitialPositionLoading: (type) { },   // 'cfi' or 'xpath'
+  // Position restore progress
+  onInitialPositionLoading: (type) { },  // 'cfi' or 'xpath'
   onInitialPositionLoaded: () { },
 
-  // Text selection
+  // Selection
   onTextSelected: (EpubTextSelection sel) { },
   onSelection: (text, cfi, selectionRect, viewRect) { },
-  onSelectionChanging: () { },   // hide custom UI while handles are dragged
+  onSelectionChanging: () { },        // hide UI while handles drag
   onDeselection: () { },
 
   // Annotations
   onAnnotationClicked: (cfi, rect) { },
 
-  // Touch
-  onTouchDown: (x, y) { },      // normalised 0.0 – 1.0
+  // Touch (normalised 0.0 – 1.0)
+  onTouchDown: (x, y) { },
   onTouchUp: (x, y) { },
 
-  // Behaviour flags
+  // Flags
   suppressNativeContextMenu: true,
   clearSelectionOnPageChange: true,
   selectAnnotationRange: true,
+  selectionContextMenu: myContextMenu,
 )
 ```
 
@@ -331,42 +367,40 @@ EpubViewer(
 
 ## Bundled fonts
 
-These font families are available for use in your Flutter app (declare `fontFamily:` in `TextStyle`):
+Declare `fontFamily:` in any Flutter `TextStyle` to use these fonts:
 
-| Family | File |
-|--------|------|
-| New York | `NewYork.ttf` |
-| Gilroy | `Gilroy-Medium.ttf` |
-| SF Pro | `SF-Pro.ttf` |
-| Alegreya | `Alegreya.ttf` |
-| Amazon Ember | `Amazon-Ember-Regular.ttf` |
-| Atkinson Hyperlegible | `AtkinsonHyperlegible-Regular.ttf` |
-| Bitter Pro | `BitterPro-Regular.ttf` |
-| Bookerly | `Bookerly.ttf` |
-| Droid Sans | `DroidSans.ttf` |
-| EB Garamond | `EBGaramond-Var.ttf` |
-| Gentium Book Plus | `GentiumBookPlus-Regular.ttf` |
-| Halant | `Halant-Regular.ttf` |
-| IBM Plex Sans | `IBMPlexSans-Regular.ttf` |
-| Linux Libertine | `LinLibertine-Regular.ttf` |
-| Literata | `Literata-Var.ttf` |
-| Lora | `Lora-Var.ttf` |
-| Ubuntu | `Ubuntu-Var.ttf` |
+| Family | Weight |
+|--------|--------|
+| New York | Regular |
+| Gilroy | Medium |
+| SF Pro | Regular |
+| Alegreya | Regular |
+| Amazon Ember | Regular |
+| Atkinson Hyperlegible | Regular |
+| Bitter Pro | Regular |
+| Bookerly | Regular |
+| Droid Sans | Regular |
+| EB Garamond | Variable |
+| Gentium Book Plus | Regular |
+| Halant | Regular |
+| IBM Plex Sans | Regular |
+| Linux Libertine | Regular |
+| Literata | Variable |
+| Lora | Variable |
+| Ubuntu | Variable |
 
 ---
 
 ## Example app
 
-A full example is in the [`example/`](example/) directory. It demonstrates:
+A full example is in [`example/`](example/) demonstrating:
 
-- Immersive full-screen reader with tap-to-reveal controls
+- Immersive full-screen reader, controls fade in/out on tap
 - Six theme swatches with live switching
 - Font-size slider
 - Chapter list bottom sheet
 - Full-text search with result navigation
-- Highlight annotation from text selection
-
-Run it:
+- Highlight annotations from text selection
 
 ```sh
 cd example
@@ -376,28 +410,25 @@ flutter run
 
 ---
 
-## Contributing
+## Credits
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+`sakura_epub` is a fork of **[flutter_epub_viewer](https://pub.dev/packages/flutter_epub_viewer)**
+by [fayis.dev](https://pub.dev/publishers/fayis.dev/packages), licensed under BSD-3-Clause.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/my-feature`)
-3. Commit your changes (`git commit -m 'Add my feature'`)
-4. Push to the branch (`git push origin feature/my-feature`)
-5. Open a pull request
+epub.js is maintained by [futurepress](https://github.com/futurepress/epub.js/).
 
 ---
 
-## Dependencies
+## Contributing
 
-| Package | Purpose |
-|---------|---------|
-| [flutter_inappwebview](https://pub.dev/packages/flutter_inappwebview) | WebView host |
-| [http](https://pub.dev/packages/http) | URL-based EPUB downloading |
-| [json_annotation](https://pub.dev/packages/json_annotation) | Model serialisation |
+1. Fork the repository
+2. Create your branch (`git checkout -b feature/my-feature`)
+3. Commit (`git commit -m 'feat: add my feature'`)
+4. Push (`git push origin feature/my-feature`)
+5. Open a pull request
 
 ---
 
 ## License
 
-[MIT](LICENSE) © 2026 northernwolf00
+[BSD-3-Clause](LICENSE) — original work © fayis.dev · modifications © 2026 northernwolf00
