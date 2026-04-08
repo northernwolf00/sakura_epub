@@ -8,6 +8,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · versi
 
 ---
 
+## [0.1.1] — 2026-04-08
+
+### Fixed
+
+- **Font family picker now changes book text** — selecting a font in the reader settings actually
+  applies that font to the epub content. Root cause: `font-family` CSS was applied via epub.js
+  themes but the font bytes were never loaded inside the epub's isolated iframes, so the browser
+  always fell back to the system default. Fix: added `setFontFamily()` which injects an
+  `@font-face` declaration (with base64-encoded font data) directly into each rendered epub iframe
+  and registers a content hook so newly navigated sections receive the same injection automatically.
+- **`EpubController.setFontFamily()`** — new public API to set the reader font at runtime.
+  Accepts `fontFamily`, optional `fontBase64` (base64-encoded ttf/otf bytes), and `fontMimeType`.
+- **`EpubController` JS calls migrated to `callAsyncJavaScript`** — all `evaluateJavascript`
+  calls that pass user-controlled strings (CFI, query, color values, etc.) were replaced with
+  `callAsyncJavaScript(functionBody, arguments)` to avoid quoting/injection issues with special
+  characters in CFI strings or search queries.
+- **Stale `Completer` cancellation** — `getCurrentLocation()` and `search()` now cancel any
+  in-flight completer before starting a new request, preventing stale callbacks from resolving
+  future results incorrectly.
+
+### Changed
+
+- All `Color.withOpacity()` calls replaced with `Color.withValues(alpha:)` (Flutter deprecation).
+- Color component accessors updated: `.alpha/.red/.green/.blue` → `.a/.r/.g/.b`.
+- Removed redundant imports flagged by the analyzer.
+
+---
+
 ## [0.1.0] — 2026-04-07
 
 This is the first independent release of **sakura_epub**, forked from `flutter_epub_viewer` v1.2.8.
