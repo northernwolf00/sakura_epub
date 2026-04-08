@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -103,6 +104,26 @@ const _fonts = [
   'Ubuntu',
 ];
 
+/// Maps font family name to its asset filename in the sakura_epub package.
+const _fontFileMap = {
+  'NewYork': 'NewYork.ttf',
+  'Gilroy': 'Gilroy-Medium.ttf',
+  'Alegreya': 'Alegreya.ttf',
+  'Amazon Ember': 'Amazon-Ember-Regular.ttf',
+  'Atkinson Hyperlegible': 'AtkinsonHyperlegible-Regular.ttf',
+  'Bitter Pro': 'BitterPro-Regular.ttf',
+  'Bookerly': 'Bookerly.ttf',
+  'Droid Sans': 'DroidSans.ttf',
+  'EB Garamond': 'EBGaramond-Var.ttf',
+  'Gentium Book Plus': 'GentiumBookPlus-Regular.ttf',
+  'Halant': 'Halant-Regular.ttf',
+  'IBM Plex Sans': 'IBMPlexSans-Regular.ttf',
+  'LinLibertine': 'LinLibertine-Regular.ttf',
+  'Literata': 'Literata-Var.ttf',
+  'Lora': 'Lora-Var.ttf',
+  'Ubuntu': 'Ubuntu-Var.ttf',
+};
+
 EpubTheme _epubThemeFor(EpubThemeType t, String font) {
   final customCss = {
     'body': {
@@ -165,7 +186,7 @@ class _SakuraAppState extends State<SakuraApp> {
         fontFamily: _fontFamily,
         tooltipTheme: TooltipThemeData(
           decoration: BoxDecoration(
-            color: opt.accent.withOpacity(0.85),
+            color: opt.accent.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(8),
           ),
           textStyle: const TextStyle(color: Colors.white, fontSize: 12),
@@ -260,6 +281,27 @@ class _ReaderPageState extends State<ReaderPage>
   void _changeFont(String font) {
     widget.onSettingsChanged(widget.themeType, font);
     _ctrl.updateTheme(theme: _epubThemeFor(widget.themeType, font));
+    _loadAndSetFont(font);
+  }
+
+  Future<void> _loadAndSetFont(String fontFamily) async {
+    final fileName = _fontFileMap[fontFamily];
+    if (fileName == null) return;
+    try {
+      final data = await rootBundle.load(
+        'packages/sakura_epub/lib/assets/fonts/$fileName',
+      );
+      final base64 = base64Encode(data.buffer.asUint8List());
+      final mime = fileName.endsWith('.otf') ? 'font/opentype' : 'font/truetype';
+      await _ctrl.setFontFamily(
+        fontFamily: fontFamily,
+        fontBase64: base64,
+        fontMimeType: mime,
+      );
+    } catch (_) {
+      // Font asset not found – apply family name only
+      await _ctrl.setFontFamily(fontFamily: fontFamily);
+    }
   }
 
   void _openSettings() {
@@ -329,8 +371,8 @@ class _ReaderPageState extends State<ReaderPage>
     final bgColor = opt.bg;
     final fgColor = opt.fg;
     final overlayBg = _isDark
-        ? Colors.black.withOpacity(0.75)
-        : Colors.white.withOpacity(0.88);
+        ? Colors.black.withValues(alpha: 0.75)
+        : Colors.white.withValues(alpha: 0.88);
     final overlayFg = _isDark ? Colors.white : const Color(0xff1a1a1a);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -353,7 +395,10 @@ class _ReaderPageState extends State<ReaderPage>
                     allowScriptedContent: true,
                     theme: _epubThemeFor(widget.themeType, widget.fontFamily),
                   ),
-                  onEpubLoaded: () => setState(() => _loaded = true),
+                  onEpubLoaded: () {
+                    setState(() => _loaded = true);
+                    _loadAndSetFont(widget.fontFamily);
+                  },
                   onChaptersLoaded: (ch) => setState(() => _chapters = ch),
                   onRelocated: (loc) => setState(() => _location = loc),
                   onTextSelected: (sel) => setState(() {
@@ -512,17 +557,17 @@ class _LoadingOverlayState extends State<_LoadingOverlay>
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: widget.fgColor.withOpacity(0.04),
+                  color: widget.fgColor.withValues(alpha: 0.04),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: widget.fgColor.withOpacity(0.08),
+                    color: widget.fgColor.withValues(alpha: 0.08),
                     width: 1,
                   ),
                 ),
                 child: Icon(
                   IconlyLight.document,
                   size: 52,
-                  color: widget.fgColor.withOpacity(0.6),
+                  color: widget.fgColor.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -530,8 +575,8 @@ class _LoadingOverlayState extends State<_LoadingOverlay>
             SizedBox(
               width: 140,
               child: LinearProgressIndicator(
-                backgroundColor: widget.fgColor.withOpacity(0.06),
-                color: widget.fgColor.withOpacity(0.25),
+                backgroundColor: widget.fgColor.withValues(alpha: 0.06),
+                color: widget.fgColor.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(10),
                 minHeight: 3,
               ),
@@ -540,7 +585,7 @@ class _LoadingOverlayState extends State<_LoadingOverlay>
             Text(
               'Opening your book…',
               style: TextStyle(
-                color: widget.fgColor.withOpacity(0.4),
+                color: widget.fgColor.withValues(alpha: 0.4),
                 fontSize: 14,
                 letterSpacing: 0.2,
                 fontWeight: FontWeight.w500,
@@ -648,12 +693,12 @@ class _BottomBar extends StatelessWidget {
             color: overlayBg,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: overlayFg.withOpacity(0.08),
+              color: overlayFg.withValues(alpha: 0.08),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -668,7 +713,7 @@ class _BottomBar extends StatelessWidget {
                   Text(
                     '$percent%',
                     style: TextStyle(
-                      color: overlayFg.withOpacity(0.5),
+                      color: overlayFg.withValues(alpha: 0.5),
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -681,8 +726,8 @@ class _BottomBar extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 4,
-                        backgroundColor: overlayFg.withOpacity(0.08),
-                        color: overlayFg.withOpacity(0.4),
+                        backgroundColor: overlayFg.withValues(alpha: 0.08),
+                        color: overlayFg.withValues(alpha: 0.4),
                       ),
                     ),
                   ),
@@ -745,12 +790,12 @@ class _SelectionBar extends StatelessWidget {
             color: overlayBg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: overlayFg.withOpacity(0.08),
+              color: overlayFg.withValues(alpha: 0.08),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 30,
                 offset: const Offset(0, 10),
               ),
@@ -761,13 +806,13 @@ class _SelectionBar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: overlayFg.withOpacity(0.05),
+                  color: overlayFg.withValues(alpha: 0.05),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   IconlyLight.edit,
                   size: 16,
-                  color: overlayFg.withOpacity(0.6),
+                  color: overlayFg.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(width: 12),
@@ -777,7 +822,7 @@ class _SelectionBar extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: overlayFg.withOpacity(0.8),
+                    color: overlayFg.withValues(alpha: 0.8),
                     fontSize: 13,
                     fontStyle: FontStyle.italic,
                     letterSpacing: -0.2,
@@ -794,7 +839,7 @@ class _SelectionBar extends StatelessWidget {
               const SizedBox(width: 8),
               _BarButton(
                 icon: IconlyLight.close_square,
-                color: overlayFg.withOpacity(0.5),
+                color: overlayFg.withValues(alpha: 0.5),
                 onTap: onClear,
               ),
             ],
@@ -853,7 +898,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
   Widget build(BuildContext context) {
     final sheetBg = widget.isDark ? const Color(0xff1c1c1e) : Colors.white;
     final labelColor =
-        widget.isDark ? Colors.white.withOpacity(0.5) : const Color(0xff6D6875);
+        widget.isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xff6D6875);
     final titleColor = widget.isDark ? Colors.white : const Color(0xff1a1a1a);
     final accentColor = Theme.of(context).colorScheme.primary;
 
@@ -863,7 +908,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 40,
             offset: const Offset(0, -10),
           ),
@@ -888,7 +933,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 ? ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
-                      backgroundColor: accentColor.withOpacity(0.05),
+                      backgroundColor: accentColor.withValues(alpha: 0.05),
                       color: accentColor,
                     ),
                   )
@@ -902,7 +947,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
               width: 40,
               height: 5,
               decoration: BoxDecoration(
-                color: labelColor.withOpacity(0.2),
+                color: labelColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -986,13 +1031,13 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                               border: Border.all(
                                 color: selected
                                     ? accentColor
-                                    : labelColor.withOpacity(0.1),
+                                    : labelColor.withValues(alpha: 0.1),
                                 width: selected ? 3 : 1,
                               ),
                               boxShadow: selected
                                   ? [
                                       BoxShadow(
-                                        color: accentColor.withOpacity(0.2),
+                                        color: accentColor.withValues(alpha: 0.2),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4),
                                       )
@@ -1003,7 +1048,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                                 ? Icon(
                                     IconlyLight.tick_square,
                                     size: 22,
-                                    color: opt.fg.withOpacity(0.8),
+                                    color: opt.fg.withValues(alpha: 0.8),
                                   )
                                 : null,
                           ),
@@ -1043,7 +1088,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1080,18 +1125,18 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                       decoration: BoxDecoration(
                         color: selected
                             ? accentColor
-                            : labelColor.withOpacity(0.05),
+                            : labelColor.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: selected
                               ? accentColor
-                              : labelColor.withOpacity(0.1),
+                              : labelColor.withValues(alpha: 0.1),
                           width: 1,
                         ),
                         boxShadow: selected
                             ? [
                                 BoxShadow(
-                                  color: accentColor.withOpacity(0.2),
+                                  color: accentColor.withValues(alpha: 0.2),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 )
@@ -1131,7 +1176,7 @@ class _SettingsSheetState extends State<_SettingsSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1153,9 +1198,9 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     activeTrackColor: accentColor,
-                    inactiveTrackColor: accentColor.withOpacity(0.1),
+                    inactiveTrackColor: accentColor.withValues(alpha: 0.1),
                     thumbColor: Colors.white,
-                    overlayColor: accentColor.withOpacity(0.12),
+                    overlayColor: accentColor.withValues(alpha: 0.12),
                     trackHeight: 4,
                     thumbShape: const RoundSliderThumbShape(
                       enabledThumbRadius: 10,
@@ -1202,10 +1247,10 @@ class _ChapterSheet extends StatelessWidget {
     final sheetBg = isDark ? const Color(0xff1c1c1e) : Colors.white;
     final titleColor = isDark ? Colors.white : const Color(0xff1a1a1a);
     final labelColor =
-        isDark ? Colors.white.withOpacity(0.5) : const Color(0xff6D6875);
+        isDark ? Colors.white.withValues(alpha: 0.5) : const Color(0xff6D6875);
     final divColor = isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.black.withOpacity(0.04);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.04);
     final accentColor = Theme.of(context).colorScheme.primary;
 
     return DraggableScrollableSheet(
@@ -1218,7 +1263,7 @@ class _ChapterSheet extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 40,
               offset: const Offset(0, -10),
             ),
@@ -1231,7 +1276,7 @@ class _ChapterSheet extends StatelessWidget {
               width: 40,
               height: 5,
               decoration: BoxDecoration(
-                color: labelColor.withOpacity(0.2),
+                color: labelColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -1256,7 +1301,7 @@ class _ChapterSheet extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
+                      color: accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -1293,7 +1338,7 @@ class _ChapterSheet extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: titleColor.withOpacity(0.9),
+                        color: titleColor.withValues(alpha: 0.9),
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1308,7 +1353,7 @@ class _ChapterSheet extends StatelessWidget {
                     ),
                     trailing: Icon(
                       IconlyLight.arrow_right_2,
-                      color: labelColor.withOpacity(0.4),
+                      color: labelColor.withValues(alpha: 0.4),
                       size: 20,
                     ),
                     onTap: () => onTap(ch.href),
@@ -1348,8 +1393,8 @@ class _SearchSheetState extends State<_SearchSheet> {
     final titleColor = widget.isDark ? Colors.white : const Color(0xff1a1a1a);
     final hintColor = widget.isDark ? Colors.white30 : Colors.black38;
     final fieldBg = widget.isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.black.withOpacity(0.04);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.04);
     final accentColor = Theme.of(context).colorScheme.primary;
 
     return Padding(
@@ -1362,7 +1407,7 @@ class _SearchSheetState extends State<_SearchSheet> {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 40,
               offset: const Offset(0, -10),
             ),
@@ -1376,7 +1421,7 @@ class _SearchSheetState extends State<_SearchSheet> {
               width: 40,
               height: 5,
               decoration: BoxDecoration(
-                color: hintColor.withOpacity(0.2),
+                color: hintColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -1402,7 +1447,7 @@ class _SearchSheetState extends State<_SearchSheet> {
                 color: fieldBg,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: titleColor.withOpacity(0.05),
+                  color: titleColor.withValues(alpha: 0.05),
                   width: 1,
                 ),
               ),
@@ -1421,7 +1466,7 @@ class _SearchSheetState extends State<_SearchSheet> {
                       fontWeight: FontWeight.w400),
                   prefixIcon: Icon(
                     IconlyLight.search,
-                    color: titleColor.withOpacity(0.2),
+                    color: titleColor.withValues(alpha: 0.2),
                     size: 20,
                   ),
                   border: InputBorder.none,
@@ -1471,8 +1516,8 @@ class _SearchResultsSheet extends StatelessWidget {
     final titleColor = isDark ? Colors.white : const Color(0xff1a1a1a);
     final labelColor = isDark ? Colors.white60 : const Color(0xff888888);
     final divColor = isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.black.withOpacity(0.04);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.04);
     final accentColor = Theme.of(context).colorScheme.primary;
 
     return DraggableScrollableSheet(
@@ -1485,7 +1530,7 @@ class _SearchResultsSheet extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 40,
               offset: const Offset(0, -10),
             ),
@@ -1498,7 +1543,7 @@ class _SearchResultsSheet extends StatelessWidget {
               width: 40,
               height: 5,
               decoration: BoxDecoration(
-                color: labelColor.withOpacity(0.2),
+                color: labelColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -1526,7 +1571,7 @@ class _SearchResultsSheet extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
+                      color: accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -1550,7 +1595,7 @@ class _SearchResultsSheet extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(IconlyLight.info_square,
-                              size: 48, color: labelColor.withOpacity(0.3)),
+                              size: 48, color: labelColor.withValues(alpha: 0.3)),
                           const SizedBox(height: 16),
                           Text(
                             'No matches found',
@@ -1583,7 +1628,7 @@ class _SearchResultsSheet extends StatelessWidget {
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: titleColor.withOpacity(0.8),
+                              color: titleColor.withValues(alpha: 0.8),
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
                               height: 1.4,
@@ -1591,7 +1636,7 @@ class _SearchResultsSheet extends StatelessWidget {
                           ),
                           trailing: Icon(
                             IconlyLight.arrow_right_2,
-                            color: labelColor.withOpacity(0.4),
+                            color: labelColor.withValues(alpha: 0.4),
                             size: 18,
                           ),
                           onTap: () => onTap(res.cfi),
@@ -1644,7 +1689,7 @@ class _BarButtonState extends State<_BarButton> {
             borderRadius: BorderRadius.circular(12),
           ),
           child:
-              Icon(widget.icon, color: widget.color.withOpacity(0.9), size: 22),
+              Icon(widget.icon, color: widget.color.withValues(alpha: 0.9), size: 22),
         ),
       ),
     );
@@ -1687,7 +1732,7 @@ class _NavButtonState extends State<_NavButton> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: widget.fgColor.withOpacity(0.06),
+            color: widget.fgColor.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -1697,7 +1742,7 @@ class _NavButtonState extends State<_NavButton> {
                     Text(
                       widget.label,
                       style: TextStyle(
-                        color: widget.fgColor.withOpacity(0.8),
+                        color: widget.fgColor.withValues(alpha: 0.8),
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.2,
@@ -1705,16 +1750,16 @@ class _NavButtonState extends State<_NavButton> {
                     ),
                     const SizedBox(width: 4),
                     Icon(widget.icon,
-                        color: widget.fgColor.withOpacity(0.8), size: 18),
+                        color: widget.fgColor.withValues(alpha: 0.8), size: 18),
                   ]
                 : [
                     Icon(widget.icon,
-                        color: widget.fgColor.withOpacity(0.8), size: 18),
+                        color: widget.fgColor.withValues(alpha: 0.8), size: 18),
                     const SizedBox(width: 4),
                     Text(
                       widget.label,
                       style: TextStyle(
-                        color: widget.fgColor.withOpacity(0.8),
+                        color: widget.fgColor.withValues(alpha: 0.8),
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         letterSpacing: -0.2,
@@ -1765,7 +1810,7 @@ class _PillButtonState extends State<_PillButton> {
             borderRadius: BorderRadius.circular(100),
             boxShadow: [
               BoxShadow(
-                color: widget.bgColor.withOpacity(0.3),
+                color: widget.bgColor.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),

@@ -12,11 +12,11 @@ extension ColorToHex on Color {
   /// If [includeAlpha] is true, the format will be #AARRGGBB.
   String toHex({bool includeAlpha = false}) {
     final alpha = includeAlpha
-        ? this.alpha.toRadixString(16).padLeft(2, '0')
+        ? (a * 255).round().toRadixString(16).padLeft(2, '0')
         : '';
-    final red = this.red.toRadixString(16).padLeft(2, '0');
-    final green = this.green.toRadixString(16).padLeft(2, '0');
-    final blue = this.blue.toRadixString(16).padLeft(2, '0');
+    final red = (r * 255).round().toRadixString(16).padLeft(2, '0');
+    final green = (g * 255).round().toRadixString(16).padLeft(2, '0');
+    final blue = (b * 255).round().toRadixString(16).padLeft(2, '0');
     return '#$alpha$red$green$blue';
   }
 }

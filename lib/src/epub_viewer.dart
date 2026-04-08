@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -8,8 +9,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:sakura_epub/sakura_epub.dart';
 
-
 import 'utils.dart';
+
+String _base64EncodeIsolate(Uint8List data) => base64Encode(data);
+
+Future<String> _encodeBase64(Uint8List data) async {
+  if (data.lengthInBytes < 512 * 1024) {
+    return base64Encode(data);
+  }
+  return compute(_base64EncodeIsolate, data);
+}
 
 /// Callback for text selection events with WebView-relative coordinates.
 ///
@@ -51,6 +60,7 @@ class EpubViewer extends StatefulWidget {
     this.onInitialPositionLoaded,
     this.onTouchDown,
     this.onTouchUp,
+    this.onPermissionRequest,
     this.suppressNativeContextMenu = false,
     this.clearSelectionOnPageChange = true,
     this.selectAnnotationRange = false,
@@ -197,6 +207,11 @@ class EpubViewer extends StatefulWidget {
   /// * [x] - Normalized X coordinate (0.0 = left edge, 1.0 = right edge)
   /// * [y] - Normalized Y coordinate (0.0 = top edge, 1.0 = bottom edge)
   final void Function(double x, double y)? onTouchUp;
+
+  /// Custom permission handler for webview permission requests.
+  /// If null, permissions are denied by default.
+  final Future<PermissionResponse> Function(PermissionRequest request)?
+  onPermissionRequest;
 
   @override
   State<EpubViewer> createState() => _EpubViewerState();
@@ -422,12 +437,44 @@ class _EpubViewerState extends State<EpubViewer> {
     webViewController?.addJavaScriptHandler(
       handlerName: "search",
       callback: (data) async {
-        var searchResult = data[0];
-        widget.epubController.searchResultCompleter.complete(
-          List<EpubSearchResult>.from(
-            searchResult.map((e) => EpubSearchResult.fromJson(e)),
-          ),
-        );
+        if (data.isEmpty) return;
+        final payload = data[0];
+        int? requestId;
+        dynamic resultsPayload;
+
+        if (payload is Map && payload.containsKey('results')) {
+          final rawId = payload['requestId'];
+          if (rawId is num) {
+            requestId = rawId.toInt();
+          } else if (rawId is String) {
+            requestId = int.tryParse(rawId);
+          }
+          resultsPayload = payload['results'];
+        } else {
+          resultsPayload = payload;
+        }
+
+        if (requestId != null &&
+            requestId != widget.epubController.activeSearchRequestId) {
+          return;
+        }
+
+        if (resultsPayload is! List) {
+          if (!widget.epubController.searchResultCompleter.isCompleted) {
+            widget.epubController.searchResultCompleter.completeError(
+              Exception('Invalid search results'),
+            );
+          }
+          return;
+        }
+
+        if (!widget.epubController.searchResultCompleter.isCompleted) {
+          widget.epubController.searchResultCompleter.complete(
+            List<EpubSearchResult>.from(
+              resultsPayload.map((e) => EpubSearchResult.fromJson(e)),
+            ),
+          );
+        }
       },
     );
 
@@ -534,12 +581,18 @@ class _EpubViewerState extends State<EpubViewer> {
               (rectData['right'] as num).toDouble(),
               (rectData['bottom'] as num).toDouble(),
             );
-            widget.epubController.cfiRectCompleter.complete(rect);
+            if (!widget.epubController.cfiRectCompleter.isCompleted) {
+              widget.epubController.cfiRectCompleter.complete(rect);
+            }
           } else {
-            widget.epubController.cfiRectCompleter.complete(null);
+            if (!widget.epubController.cfiRectCompleter.isCompleted) {
+              widget.epubController.cfiRectCompleter.complete(null);
+            }
           }
         } catch (e) {
-          widget.epubController.cfiRectCompleter.completeError(e);
+          if (!widget.epubController.cfiRectCompleter.isCompleted) {
+            widget.epubController.cfiRectCompleter.completeError(e);
+          }
         }
       },
     );
@@ -547,24 +600,63 @@ class _EpubViewerState extends State<EpubViewer> {
     webViewController?.addJavaScriptHandler(
       handlerName: "currentLocation",
       callback: (data) {
-        try {
-          if (data.isNotEmpty && data[0] != null) {
-            final locationData = data[0] as Map<String, dynamic>;
-            final location = EpubLocation(
-              startCfi: locationData['startCfi'],
-              endCfi: locationData['endCfi'],
-              startXpath: locationData['startXpath'],
-              endXpath: locationData['endXpath'],
-              progress: (locationData['progress'] as num).toDouble(),
-            );
-            widget.epubController.currentLocationCompleter.complete(location);
-          } else {
+        if (data.isEmpty || data[0] == null) {
+          if (!widget.epubController.currentLocationCompleter.isCompleted) {
             widget.epubController.currentLocationCompleter.completeError(
               Exception('Invalid location data'),
             );
           }
+          return;
+        }
+
+        final payload = data[0];
+        int? requestId;
+        Map<String, dynamic>? locationData;
+
+        if (payload is Map && payload.containsKey('location')) {
+          final rawId = payload['requestId'];
+          if (rawId is num) {
+            requestId = rawId.toInt();
+          } else if (rawId is String) {
+            requestId = int.tryParse(rawId);
+          }
+          final rawLocation = payload['location'];
+          if (rawLocation is Map) {
+            locationData = Map<String, dynamic>.from(rawLocation);
+          }
+        } else if (payload is Map) {
+          locationData = Map<String, dynamic>.from(payload);
+        }
+
+        if (requestId != null &&
+            requestId != widget.epubController.activeLocationRequestId) {
+          return;
+        }
+
+        if (locationData == null) {
+          if (!widget.epubController.currentLocationCompleter.isCompleted) {
+            widget.epubController.currentLocationCompleter.completeError(
+              Exception('Invalid location data'),
+            );
+          }
+          return;
+        }
+
+        try {
+          final location = EpubLocation(
+            startCfi: locationData['startCfi'],
+            endCfi: locationData['endCfi'],
+            startXpath: locationData['startXpath'],
+            endXpath: locationData['endXpath'],
+            progress: (locationData['progress'] as num).toDouble(),
+          );
+          if (!widget.epubController.currentLocationCompleter.isCompleted) {
+            widget.epubController.currentLocationCompleter.complete(location);
+          }
         } catch (e) {
-          widget.epubController.currentLocationCompleter.completeError(e);
+          if (!widget.epubController.currentLocationCompleter.isCompleted) {
+            widget.epubController.currentLocationCompleter.completeError(e);
+          }
         }
       },
     );
@@ -598,19 +690,33 @@ class _EpubViewerState extends State<EpubViewer> {
       backgroundColor = bgDecoration.color!.toHex();
     }
 
-    String customCss = widget.displaySettings?.theme?.customCss != null
-        ? Utils.encodeMap(widget.displaySettings!.theme!.customCss!)
-        : "null";
+    final customCss = widget.displaySettings?.theme?.customCss;
 
     bool clearSelectionOnPageChange = widget.clearSelectionOnPageChange;
 
-    String xpathParam = initialXPath != null ? '"$initialXPath"' : 'null';
+    String base64Data = await _encodeBase64(data);
 
-    String base64Data = base64Encode(data);
-
-    webViewController?.evaluateJavascript(
-      source:
-          'loadBook("$base64Data", "$cfi", $xpathParam, "$manager", "$flow", "$spread", $snap, $allowScripted, "$direction", $useCustomSwipe, "$backgroundColor", "$foregroundColor", "$fontSize", $clearSelectionOnPageChange, ${widget.selectAnnotationRange}, $customCss)',
+    await webViewController?.callAsyncJavaScript(
+      functionBody:
+          'loadBook(data, cfi, initialXPath, manager, flow, spread, snap, allowScriptedContent, direction, useCustomSwipe, backgroundColor, foregroundColor, fontSize, clearSelectionOnNav, selectAnnotationRangeParam, customCss)',
+      arguments: {
+        'data': base64Data,
+        'cfi': cfi,
+        'initialXPath': initialXPath,
+        'manager': manager,
+        'flow': flow,
+        'spread': spread,
+        'snap': snap,
+        'allowScriptedContent': allowScripted,
+        'direction': direction,
+        'useCustomSwipe': useCustomSwipe,
+        'backgroundColor': backgroundColor,
+        'foregroundColor': foregroundColor,
+        'fontSize': fontSize,
+        'clearSelectionOnNav': clearSelectionOnPageChange,
+        'selectAnnotationRangeParam': widget.selectAnnotationRange,
+        'customCss': customCss,
+      },
     );
   }
 
@@ -639,9 +745,12 @@ class _EpubViewerState extends State<EpubViewer> {
         },
         onLoadStart: (controller, url) {},
         onPermissionRequest: (controller, request) async {
+          if (widget.onPermissionRequest != null) {
+            return await widget.onPermissionRequest!(request);
+          }
           return PermissionResponse(
             resources: request.resources,
-            action: PermissionResponseAction.GRANT,
+            action: PermissionResponseAction.DENY,
           );
         },
         shouldOverrideUrlLoading: (controller, navigationAction) async {

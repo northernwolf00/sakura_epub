@@ -18,6 +18,10 @@ class ColorConverter implements JsonConverter<Color?, String?> {
     if (color == null) {
       return null;
     }
-    return color.value.toRadixString(16);
+    final a = (color.a * 255).round().toRadixString(16).padLeft(2, '0');
+    final r = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
+    final g = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
+    final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
+    return '$a$r$g$b';
   }
 }
