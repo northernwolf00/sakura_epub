@@ -8,6 +8,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · versi
 
 ---
 
+## [0.1.2] — 2026-04-08
+
+### Fixed
+
+- **Missing return type annotations** — all methods in `EpubController` that lacked explicit return
+  types (`void`, `Future<void>`) now declare them, satisfying `type_annotate_public_apis` and
+  related lints in stricter lint rulesets (e.g. `lints_core`).
+
+---
+
 ## [0.1.1] — 2026-04-08
 
 ### Fixed

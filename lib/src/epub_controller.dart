@@ -16,7 +16,7 @@ class EpubController {
   int get activeSearchRequestId => _searchRequestId;
   int get activeLocationRequestId => _currentLocationRequestId;
 
-  setWebViewController(InAppWebViewController controller) {
+  void setWebViewController(InAppWebViewController controller) {
     webViewController = controller;
   }
 
@@ -27,7 +27,7 @@ class EpubController {
   }
 
   ///Move epub view to specific area using Cfi string, XPath/XPointer, or chapter href
-  display({
+  void display({
     ///Cfi String, XPath/XPointer string, or chapter href of the desired location
     ///If the string starts with '/', it will be treated as XPath/XPointer
     required String cfi,
@@ -40,13 +40,13 @@ class EpubController {
   }
 
   ///Moves to next page in epub view
-  next() {
+  void next() {
     checkEpubLoaded();
     webViewController?.evaluateJavascript(source: 'next()');
   }
 
   ///Moves to previous page in epub view
-  prev() {
+  void prev() {
     checkEpubLoaded();
     webViewController?.evaluateJavascript(source: 'previous()');
   }
@@ -118,7 +118,7 @@ class EpubController {
   }
 
   ///Adds a highlight to epub viewer
-  addHighlight({
+  void addHighlight({
     ///Cfi string of the desired location
     required String cfi,
 
@@ -142,7 +142,7 @@ class EpubController {
   }
 
   ///Adds a underline annotation
-  addUnderline({required String cfi}) {
+  void addUnderline({required String cfi}) {
     checkEpubLoaded();
     webViewController?.callAsyncJavaScript(
       functionBody: 'addUnderLine(cfi)',
@@ -157,7 +157,7 @@ class EpubController {
   // }
 
   ///Removes a highlight from epub viewer
-  removeHighlight({required String cfi}) {
+  void removeHighlight({required String cfi}) {
     checkEpubLoaded();
     webViewController?.callAsyncJavaScript(
       functionBody: 'removeHighlight(cfi)',
@@ -166,7 +166,7 @@ class EpubController {
   }
 
   ///Removes a underline from epub viewer
-  removeUnderline({required String cfi}) {
+  void removeUnderline({required String cfi}) {
     checkEpubLoaded();
     webViewController?.callAsyncJavaScript(
       functionBody: 'removeUnderLine(cfi)',
@@ -181,13 +181,13 @@ class EpubController {
   // }
 
   ///Clears any active text selection in the epub viewer
-  clearSelection() {
+  void clearSelection() {
     checkEpubLoaded();
     webViewController?.callAsyncJavaScript(functionBody: 'clearSelection()');
   }
 
   ///Set [EpubSpread] value
-  setSpread({required EpubSpread spread}) async {
+  Future<void> setSpread({required EpubSpread spread}) async {
     checkEpubLoaded();
     await webViewController?.callAsyncJavaScript(
       functionBody: 'setSpread(spread)',
@@ -196,7 +196,7 @@ class EpubController {
   }
 
   ///Set [EpubFlow] value
-  setFlow({required EpubFlow flow}) async {
+  Future<void> setFlow({required EpubFlow flow}) async {
     checkEpubLoaded();
     await webViewController?.callAsyncJavaScript(
       functionBody: 'setFlow(flow)',
@@ -205,7 +205,7 @@ class EpubController {
   }
 
   ///Set [EpubManager] value
-  setManager({required EpubManager manager}) async {
+  Future<void> setManager({required EpubManager manager}) async {
     checkEpubLoaded();
     await webViewController?.callAsyncJavaScript(
       functionBody: 'setManager(manager)',
@@ -214,7 +214,7 @@ class EpubController {
   }
 
   ///Adjust font size in epub viewer
-  setFontSize({required double fontSize}) async {
+  Future<void> setFontSize({required double fontSize}) async {
     checkEpubLoaded();
     await webViewController?.callAsyncJavaScript(
       functionBody: 'setFontSize(fontSize)',
@@ -225,7 +225,7 @@ class EpubController {
   ///Set font family in epub viewer.
   ///[fontBase64] is the base64-encoded font file (ttf/otf).
   ///[fontMimeType] defaults to 'font/truetype' for ttf, use 'font/opentype' for otf.
-  setFontFamily({
+  Future<void> setFontFamily({
     required String fontFamily,
     String? fontBase64,
     String fontMimeType = 'font/truetype',
@@ -241,7 +241,7 @@ class EpubController {
     );
   }
 
-  updateTheme({required EpubTheme theme}) async {
+  Future<void> updateTheme({required EpubTheme theme}) async {
     checkEpubLoaded();
     String? foregroundColor = theme.foregroundColor?.toHex();
     String? backgroundColor;
@@ -327,7 +327,7 @@ class EpubController {
 
   ///Given a percentage moves to the corresponding page
   ///Progress percentage should be between 0.0 and 1.0
-  toProgressPercentage(double progressPercent) {
+  void toProgressPercentage(double progressPercent) {
     assert(
       progressPercent >= 0.0 && progressPercent <= 1.0,
       'Progress percentage must be between 0.0 and 1.0',
@@ -340,21 +340,21 @@ class EpubController {
   }
 
   ///Moves to the first page of the epub
-  moveToFistPage() {
+  void moveToFistPage() {
     toProgressPercentage(0.0);
   }
 
   ///Moves to the last page of the epub
-  moveToLastPage() {
+  void moveToLastPage() {
     toProgressPercentage(1.0);
   }
 
   ///Moves to the first page of the epub
-  moveToFirstPage() {
+  void moveToFirstPage() {
     toProgressPercentage(0.0);
   }
 
-  checkEpubLoaded() {
+  void checkEpubLoaded() {
     if (webViewController == null) {
       throw Exception(
         "Epub viewer is not loaded, wait for onEpubLoaded callback",

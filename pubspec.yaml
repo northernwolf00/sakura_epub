@@ -1,6 +1,6 @@
 name: sakura_epub
 description: "A full-featured Flutter EPUB reader package. Render EPUB 2 & 3 books with annotations, search, themes, and programmatic navigation — powered by epub.js."
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/northernwolf00/sakura_epub
 
 environment:
