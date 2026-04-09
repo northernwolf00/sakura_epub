@@ -30,7 +30,7 @@ class EpubTheme {
     required this.themeType,
   });
 
-  static _decorationToJson(Decoration? decoration) {
+  static Map<String, dynamic>? _decorationToJson(Decoration? decoration) {
     return null;
   }
 

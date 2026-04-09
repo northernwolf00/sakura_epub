@@ -8,6 +8,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · versi
 
 ---
 
+## [0.1.3] — 2026-04-09
+
+### Fixed
+
+- **`EpubTheme` analyzer lint** — added the missing return type annotation for
+  `_decorationToJson` to satisfy `lints_core` static analysis.
+
+---
+
 ## [0.1.2] — 2026-04-08
 
 ### Fixed
